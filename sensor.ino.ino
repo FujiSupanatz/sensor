@@ -1,13 +1,19 @@
 #include <Wire.h>
 #include <EEPROM.h>
-int bottleCount = 0; // Initialize bottle count to zero
+
+int bottleCount = 0;
 String phoneNumber = "0909090900";
 void saveCountToEEPROM(int count, String number);
 void readCountFromEEPROM();
+void saveCountToEEPROM(int count, String number);
+void readCountFromEEPROM();
+void saveFunction();
+void saveButton();
+void checkSensors();
 
 const int sensor1Pin = 2; // Sensor 1 PIN = 2
 const int sensor2Pin = 3;
-const int sensor3Pin = 4; // Assuming this was meant for the third sensor
+const int sensor3Pin = 4; 
 const int sensor4Pin = 5;
 const int sensor5Pin = 6;
 const int sensor6Pin = 7;
@@ -15,9 +21,11 @@ const int sensor7Pin = 8;
 
 const int  buttonPin = 13; // button pin set 13 na ikuy
 
-// You can adjust the pin number accordingly for your setup
+unsigned long previousMillis = 0;
+const long interval = 200; // Interval for sensor checking in milliseconds
 
-int sensor1Value; // Variable to store the sensor value
+
+int sensor1Value;
 int sensor2Value;
 int sensor3Value;
 int sensor4Value;
@@ -30,8 +38,8 @@ int buttonState = 0;
 bool runSensor = false;
 
 void setup() {
-  Serial.begin(9600); // Initialize serial communication
-  pinMode(sensor1Pin, INPUT); // Set sensor pins as input
+  Serial.begin(9600);
+  pinMode(sensor1Pin, INPUT);
   pinMode(sensor2Pin, INPUT);
   pinMode(sensor3Pin, INPUT);
   pinMode(sensor4Pin, INPUT);
@@ -41,33 +49,53 @@ void setup() {
   pinMode(buttonPin, INPUT);
 
 }
-void loop(){
-  buttonState = digitalRead(buttonPin);
-  
+
+
+void saveFunction() { // SAVE
+  saveCountToEEPROM(bottleCount, phoneNumber);
+  readCountFromEEPROM();
+}
+
+
+void saveButton() {
+
+     int buttonState = digitalRead(buttonPin);
+
   if (buttonState == HIGH) {
-    // Toggle the flag state when the button is pressed
+    saveFunction();
+    Serial.println("Button was pressed");
     runSensor = !runSensor;
-    delay(200); // Delay for debouncing
+    delay(200);
   }
-  
-  if (runSensor) {
-    sensor(); // Run sensor function while the flag is true
+}
+
+
+void loop(){
+
+    saveButton();
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= interval) {
+    // Update the previous time when sensors were checked
+    previousMillis = currentMillis;
+
+    if (runSensor) {
+      checkSensors();
+    }
   }
-  
-  // Additional code as needed
-  
-  delay(200); // Add a small delay for stability
 }
 
 void sensor() {
-  sensor1Value = digitalRead(sensor1Pin);
-  sensor2Value = digitalRead(sensor2Pin);
-  sensor3Value = digitalRead(sensor3Pin);
-  sensor4Value = digitalRead(sensor4Pin);
-  sensor5Value = digitalRead(sensor5Pin);
-  sensor6Value = digitalRead(sensor6Pin);
-  sensor7Value = digitalRead(sensor7Pin);
-  buttonState =  digitalRead(buttonPin);
+    sensor1Value = digitalRead(sensor1Pin);
+    sensor2Value = digitalRead(sensor2Pin);
+    sensor3Value = digitalRead(sensor3Pin);
+    sensor4Value = digitalRead(sensor4Pin);
+    sensor5Value = digitalRead(sensor5Pin);
+    sensor6Value = digitalRead(sensor6Pin);
+    sensor7Value = digitalRead(sensor7Pin);
+
+    buttonState =  digitalRead(buttonPin);
+    
   
     
     if (sensor1Value == LOW) {
@@ -127,8 +155,6 @@ void sensor() {
       delay(250);
     } */
 
-     
-     
   delay(200); // Add a small delay for stability
 }
 
@@ -146,14 +172,16 @@ void saveCountToEEPROM(int count, String number) {
 }
 
 void readCountFromEEPROM() {
-   int addressCount = 0; // Starting address in EEPROM to read for count
+  int addressCount = 0; // Starting address in EEPROM to read for count
   int addressPhone = sizeof(int); // Next address after count for phone number
 
   EEPROM.get(addressCount, bottleCount); // Retrieve count from EEPROM
 
   // Retrieve phone number character by character until a null terminator is encountered
   String tempPhone = "";
+
   char ch;
+
   do {
     EEPROM.get(addressPhone + tempPhone.length(), ch);
     if (ch != '\0') {
