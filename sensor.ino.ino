@@ -1,4 +1,9 @@
+#include <Wire.h>
+#include <EEPROM.h>
 int bottleCount = 0; // Initialize bottle count to zero
+String phoneNumber = "0909090900";
+void saveCountToEEPROM(int count, String number);
+void readCountFromEEPROM();
 
 const int sensor1Pin = 2; // Sensor 1 PIN = 2
 const int sensor2Pin = 3;
@@ -7,6 +12,8 @@ const int sensor4Pin = 5;
 const int sensor5Pin = 6;
 const int sensor6Pin = 7;
 const int sensor7Pin = 8;
+
+const int  buttonPin = 13; // button pin set 13 na ikuy
 
 // You can adjust the pin number accordingly for your setup
 
@@ -18,6 +25,9 @@ int sensor5Value;
 int sensor6Value;
 int sensor7Value;
 
+int buttonState = 0;
+
+bool runSensor = false;
 
 void setup() {
   Serial.begin(9600); // Initialize serial communication
@@ -26,9 +36,30 @@ void setup() {
   pinMode(sensor3Pin, INPUT);
   pinMode(sensor4Pin, INPUT);
   pinMode(sensor5Pin, INPUT);
+  pinMode(sensor6Pin, INPUT);
+  pinMode(sensor7Pin, INPUT);
+  pinMode(buttonPin, INPUT);
+
+}
+void loop(){
+  buttonState = digitalRead(buttonPin);
+  
+  if (buttonState == HIGH) {
+    // Toggle the flag state when the button is pressed
+    runSensor = !runSensor;
+    delay(200); // Delay for debouncing
+  }
+  
+  if (runSensor) {
+    sensor(); // Run sensor function while the flag is true
+  }
+  
+  // Additional code as needed
+  
+  delay(200); // Add a small delay for stability
 }
 
-void loop() {
+void sensor() {
   sensor1Value = digitalRead(sensor1Pin);
   sensor2Value = digitalRead(sensor2Pin);
   sensor3Value = digitalRead(sensor3Pin);
@@ -36,19 +67,35 @@ void loop() {
   sensor5Value = digitalRead(sensor5Pin);
   sensor6Value = digitalRead(sensor6Pin);
   sensor7Value = digitalRead(sensor7Pin);
-  if (sensor1Value == LOW || sensor2Value == LOW || sensor3Value == LOW || sensor4Value == LOW || sensor5Value == LOW || sensor6Value == LOW || sensor7Value) {
+  buttonState =  digitalRead(buttonPin);
+  
+    
     if (sensor1Value == LOW) {
       Serial.println("------------------------");
       Serial.println("Sensor1 Object Detected!");
       Serial.println("------------------------");
       delay(250);
+      bottleCount++;
+      saveCountToEEPROM(bottleCount, phoneNumber);
+      readCountFromEEPROM();   
+      Serial.print("Count = ");
+      Serial.println(bottleCount);
+    
     }
     if (sensor2Value == LOW) {
       Serial.println("------------------------");
       Serial.println("Sensor2 Object Detected!");
       Serial.println("------------------------");
       delay(250);
-    }
+      bottleCount++;
+     saveCountToEEPROM(bottleCount, phoneNumber);  
+     readCountFromEEPROM();
+     
+      Serial.print("Count = ");
+      Serial.println(bottleCount);
+      
+  
+    } /*
     if (sensor3Value == LOW) {
       Serial.println("------------------------");
       Serial.println("Sensor3 Object Detected!");
@@ -78,11 +125,47 @@ void loop() {
       Serial.println("Sensor7 Object Detected!");
       Serial.println("------------------------");
       delay(250);
-    }
+    } */
 
-    bottleCount++;
-    Serial.print("Count = ");
-    Serial.println(bottleCount);
-  }
+     
+     
   delay(200); // Add a small delay for stability
+}
+
+
+void saveCountToEEPROM(int count, String number) {
+  // Calculate the EEPROM addresses to store the integer count and phone number
+  int addressCount = 0; // Starting address in EEPROM for count
+  int addressPhone = sizeof(int); // Next address after count for phone number
+
+  EEPROM.put(addressCount, count); // Store count at the calculated address
+  for (unsigned int i = 0; i < number.length(); ++i) {
+    EEPROM.put(addressPhone + i, number[i]); // Store each character of the phone number
+  }
+  EEPROM.put(addressPhone + number.length(), '\0'); // Null-terminate the phone number string
+}
+
+void readCountFromEEPROM() {
+   int addressCount = 0; // Starting address in EEPROM to read for count
+  int addressPhone = sizeof(int); // Next address after count for phone number
+
+  EEPROM.get(addressCount, bottleCount); // Retrieve count from EEPROM
+
+  // Retrieve phone number character by character until a null terminator is encountered
+  String tempPhone = "";
+  char ch;
+  do {
+    EEPROM.get(addressPhone + tempPhone.length(), ch);
+    if (ch != '\0') {
+      tempPhone += ch;
+    }
+  } while (ch != '\0');
+
+  phoneNumber = tempPhone; // Update the global phone number variable
+
+  // Print the stored data to Serial monitor
+  Serial.print("Stored Count: ");
+  Serial.println(bottleCount);
+  Serial.print("Stored Phone Number: ");
+  Serial.println(phoneNumber);
 }
