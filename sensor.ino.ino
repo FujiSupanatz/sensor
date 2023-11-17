@@ -1,15 +1,15 @@
 #include <Wire.h>
 #include <EEPROM.h>
-
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 int bottleCount = 0;
 String phoneNumber = "0909090900";
-void saveCountToEEPROM(int count, String number);
-void readCountFromEEPROM();
 void saveCountToEEPROM(int count, String number);
 void readCountFromEEPROM();
 void saveFunction();
 void saveButton();
 void checkSensors();
+
 
 const int sensor1Pin = 2; // Sensor 1 PIN = 2
 const int sensor2Pin = 3;
@@ -18,9 +18,10 @@ const int sensor4Pin = 5;
 const int sensor5Pin = 6;
 const int sensor6Pin = 7;
 const int sensor7Pin = 8;
+const int ledPin = 9;
 
 const int  buttonPin = 13; // button pin set 13 na ikuy
-
+bool buttonPressed = false;
 unsigned long previousMillis = 0;
 const long interval = 200; // Interval for sensor checking in milliseconds
 
@@ -33,12 +34,13 @@ int sensor5Value;
 int sensor6Value;
 int sensor7Value;
 
-int buttonState = 0;
 
-bool runSensor = false;
+
+
 
 void setup() {
   Serial.begin(9600);
+
   pinMode(sensor1Pin, INPUT);
   pinMode(sensor2Pin, INPUT);
   pinMode(sensor3Pin, INPUT);
@@ -47,7 +49,12 @@ void setup() {
   pinMode(sensor6Pin, INPUT);
   pinMode(sensor7Pin, INPUT);
   pinMode(buttonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
 
+  lcd.begin(16, 2);
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+  lcd.print("Hello world");
 }
 
 
@@ -57,35 +64,36 @@ void saveFunction() { // SAVE
 }
 
 
+
 void saveButton() {
+  int buttonState = digitalRead(buttonPin);
 
-     int buttonState = digitalRead(buttonPin);
-
-  if (buttonState == HIGH) {
+  if (buttonState == HIGH && !buttonPressed) {
     saveFunction();
     Serial.println("Button was pressed");
-    runSensor = !runSensor;
+    buttonPressed = true;
     delay(200);
+  } else {
+    buttonPressed = false;
   }
 }
 
 
-void loop(){
 
-    saveButton();
+void checkSensors() {
+   saveButton();
+
+  if (buttonPressed) {
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval) {
-    // Update the previous time when sensors were checked
     previousMillis = currentMillis;
 
-    if (runSensor) {
-      checkSensors();
-    }
-  }
-}
-
-void sensor() {
     sensor1Value = digitalRead(sensor1Pin);
     sensor2Value = digitalRead(sensor2Pin);
     sensor3Value = digitalRead(sensor3Pin);
@@ -94,15 +102,11 @@ void sensor() {
     sensor6Value = digitalRead(sensor6Pin);
     sensor7Value = digitalRead(sensor7Pin);
 
-    buttonState =  digitalRead(buttonPin);
-    
-  
-    
-    if (sensor1Value == LOW) {
+      if (sensor1Value == LOW) {
       Serial.println("------------------------");
       Serial.println("Sensor1 Object Detected!");
       Serial.println("------------------------");
-      delay(250);
+      
       bottleCount++;
       saveCountToEEPROM(bottleCount, phoneNumber);
       readCountFromEEPROM();   
@@ -114,48 +118,25 @@ void sensor() {
       Serial.println("------------------------");
       Serial.println("Sensor2 Object Detected!");
       Serial.println("------------------------");
-      delay(250);
+      
       bottleCount++;
      saveCountToEEPROM(bottleCount, phoneNumber);  
      readCountFromEEPROM();
-     
       Serial.print("Count = ");
       Serial.println(bottleCount);
       
   
-    } /*
-    if (sensor3Value == LOW) {
-      Serial.println("------------------------");
-      Serial.println("Sensor3 Object Detected!");
-      Serial.println("------------------------");
-      delay(250);
-    }
-    if (sensor4Value == LOW) {
-      Serial.println("------------------------");
-      Serial.println("Sensor4 Object Detected!");
-      Serial.println("------------------------");
-      delay(250);
-    }
-    if (sensor5Value == LOW) {
-      Serial.println("------------------------");
-      Serial.println("Sensor5 Object Detected!");
-      Serial.println("------------------------");
-      delay(250);
-    }
-    if (sensor6Value == LOW) {
-      Serial.println("------------------------");
-      Serial.println("Sensor6 Object Detected!");
-      Serial.println("------------------------");
-      delay(250);
-    }
-    if (sensor7Value == LOW) {
-      Serial.println("------------------------");
-      Serial.println("Sensor7 Object Detected!");
-      Serial.println("------------------------");
-      delay(250);
-    } */
+    } 
+  }
+}
+void loop() {
+   
+    
+  
+    
+  
 
-  delay(200); // Add a small delay for stability
+
 }
 
 
