@@ -4,9 +4,12 @@
 #include <Wire.h>
 #include <EEPROM.h>
 #include <LiquidCrystal_I2C.h>
+#include <SoftwareSerial.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 
 int bottleCount = 0;
-
+SoftwareSerial esp8266(10, 11); // Define SoftwareSerial object for ESP8266 (Connect ESP8266 RX to Arduino pin 10, and ESP8266 TX to Arduino pin 11)
 String phoneNumber = "";
 
 const byte ROWS = 4; //four rows
@@ -27,6 +30,10 @@ const int sensor6Pin = 7;
 const int sensor7Pin = 8;
 
 const int buttonPin = 13;
+
+const char* ssid = "YourWiFiSSID";
+const char* password = "YourWiFiPassword";
+const char* serverUrl = "http://yourwebsite.com/api/endpoint"; // Replace with your website's API endpoint
 
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 50;
@@ -66,6 +73,8 @@ void setup() {
   pinMode(sensor6Pin, INPUT);
   pinMode(sensor7Pin, INPUT);
   pinMode(buttonPin, INPUT);
+ 
+  Serial.println("Ready");
   Wire.begin();
   Serial.begin(9600);
   lcd.init();
@@ -77,11 +86,49 @@ void setup() {
 
   Serial.println("phone : ");
  
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Your data to send
+  String dataToSend = "YourDataHere";
+
+  HTTPClient http;
+  http.begin(serverUrl);
+  http.addHeader("Content-Type", "application/json");
+
+  int httpResponseCode = http.POST(dataToSend);
+
+  if (httpResponseCode > 0) {
+    String response = http.getString();
+    Serial.println(httpResponseCode);
+    Serial.println(response);
+  } else {
+    Serial.print("Error on sending POST: ");
+    Serial.println(httpResponseCode);
+  }
+
+  http.end();
+
+
 
 }
 
 
 void loop() {
+  // Code to send commands to ESP8266 when '1' is received from Serial
+  if (Serial.available()) {
+    char c = Serial.read(); // Read the incoming data from Arduino
+
+    if (c == '1') {
+      Serial.println("Sending WiFi command to NodeMCU...");
+      esp8266.write("1"); // Send command to NodeMCU (ESP8266) for WiFi action
+    }
+  }
 
 char key = keypad.getKey();
 
@@ -92,7 +139,7 @@ char key = keypad.getKey();
     delay(150);
      Serial.print(key);
   }
-
+    
 
   
   saveButton();
