@@ -1,8 +1,22 @@
+#include <Key.h>
+#include <Keypad.h>
+#include <hd44780.h>
 #include <Wire.h>
 #include <EEPROM.h>
+#include <LiquidCrystal_I2C.h>
 
 int bottleCount = 0;
-String phoneNumber = "0909090900";
+
+String phoneNumber = "";
+
+const byte ROWS = 4; //four rows
+const byte COLS = 4; //three columns
+char keys[ROWS][COLS] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'}, // key pad 
+  {'*', '0', '#', 'D'}
+};
 
 const int sensor1Pin = 2;
 const int sensor2Pin = 3;
@@ -26,7 +40,15 @@ int sensor5Value;
 int sensor6Value;
 int sensor7Value;
 
+
+
+byte rowPins[ROWS] = {9, 8, 7, 6};
+byte colPins[COLS] = {5, 4, 3, 2};
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
 bool runSensor = false;
+
 
 void saveCountToEEPROM(int count, String number);
 void readCountFromEEPROM();
@@ -44,9 +66,35 @@ void setup() {
   pinMode(sensor6Pin, INPUT);
   pinMode(sensor7Pin, INPUT);
   pinMode(buttonPin, INPUT);
+  Wire.begin();
+  Serial.begin(9600);
+  lcd.init();
+  
+  // Turn on the backlight (if available)
+  lcd.backlight();
+   lcd.setCursor(0, 0);
+  lcd.print("Enter your phone:");
+
+  Serial.println("phone : ");
+ 
+
 }
 
+
 void loop() {
+
+char key = keypad.getKey();
+
+  if (key != NO_KEY && isDigit(key)) {
+    phoneNumber += key;
+    lcd.setCursor(phoneNumber.length() - 1, 1); // Set cursor at the end of the phone number on the LCD
+    lcd.print(key);
+    delay(150);
+     Serial.print(key);
+  }
+
+
+  
   saveButton();
   if (runSensor) {
     checkSensors();
