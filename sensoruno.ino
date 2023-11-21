@@ -32,8 +32,8 @@ char keys[ROWS][COLS] = {
   {'7', '8', '9', 'C'}, // key pad 
   {'*', '0', '#', 'D'}
 };
-byte rowPins[ROWS] = {8, 9, 10, 11}; // Update with the new row pins (8, 9, 10, 11)
-byte colPins[COLS] = {4, 5, 6, 7}; // Update with the new column pins (4, 5, 6, 7)
+byte rowPins[ROWS] =  {4, 5, 6, 7};// Update with the new row pins (8, 9, 10, 11)
+byte colPins[COLS] = {8, 9, 10, 11}; // Update with the new column pins (4, 5, 6, 7)
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 void setup() {
@@ -67,18 +67,18 @@ void loop() {
     lcd.backlight();
     
    lcd.setCursor(0, 0);
-  lcd.print("Full:");
+  //lcd.print("Full:");
     
     delay(1000);
   }
-  if (sensor5Value == LOW) {
+  if (sensor5Value == HIGH) {
     Serial.println("------------------------");
     Serial.println("Tank 2 is full!!!!!");
     Serial.println("------------------------");
     lcd.backlight();
     
    lcd.setCursor(0, 0);
-  lcd.print("Full:");
+  ///lcd.print("Full:");
     delay(1000);
   }
   if (sensor6Value == LOW) {
@@ -88,7 +88,7 @@ void loop() {
     lcd.backlight();
     
    lcd.setCursor(0, 0);
-  lcd.print("Full:");
+  //lcd.print("Full:");
   delay(1000);
   }
 
@@ -116,26 +116,34 @@ if (key != NO_KEY) {
       Serial.print("Entered phone number: ");
       Serial.println(phoneNumber);
       // Reset the phoneNumber variable for the next entry
-      phoneNumber = "";
-    }
-    else if (key == 'B') {
-      // Call checkSensors() when 'B' is pressed
-      checkSensors();
-    }
-    } else if (key == 'C') {
-      // When 'C' is pressed, display the bottle count and phone number on LCD
       lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Count: ");
-      lcd.print(bottleCount);
+      lcd.print("Complete");
+      delay(2000); // Display "Complete" for 2 seconds
+      lcd.clear();
+      lcd.print("Enter your phone");
+      lcd.setCursor(0, 1); // Set cursor to the second line
+      phoneNumber = ""; // Reset phone number after displaying "Enter your phone"
+    }
+  } else if (key == 'B') {
+    // Call checkSensors() when 'B' is pressed
+    checkSensors();
+  } else if (key == 'C') {
+    // When 'C' is pressed, display the bottle count and phone number on LCD
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Count: ");
+    lcd.print(bottleCount);
 
-      lcd.setCursor(0, 1);
-      lcd.print("Phone: ");
-      lcd.print(phoneNumber);
-      delay(7500); // Display for 2 seconds before returning to normal operation
-      lcd.clear();
+    lcd.setCursor(phoneNumber.length() - 1, 1);
+    lcd.print("Phone: ");
+    lcd.print(phoneNumber);
+    delay(7500); // Display for 7.5 seconds before returning to normal operation
+    lcd.clear();
+    lcd.print("Enter your phone");
+    
   }
 }
+
 
   
   
