@@ -12,6 +12,8 @@ int sensor2Value;
 int sensor3Value;
   
 void setup() {
+  pinMode(D2 , INPUT);
+  pinMode(D3, OUTPUT);
   pinMode(sensor1Pin, INPUT);
   pinMode(sensor2Pin, INPUT);
   pinMode(sensor3Pin, INPUT);
@@ -21,6 +23,7 @@ void setup() {
 }
 
 void loop() {
+  
   sensor1Value = digitalRead(sensor1Pin);
   sensor2Value = digitalRead(sensor2Pin);
   sensor3Value = digitalRead(sensor3Pin);
@@ -28,6 +31,19 @@ void loop() {
   if (sensor1Value == HIGH) {
     NodeMCU.println("1"); // Send "1" to indicate object detection to Arduino Uno
   }
+  else if (sensor2Value == HIGH) {
+    NodeMCU.println("2"); // Send "1" to indicate object detection to Arduino Uno
+  }
+  
+  else if (sensor3Value == HIGH) {
+    NodeMCU.println("3"); // Send "1" to indicate object detection to Arduino Uno
+  }
+  else{
+    NodeMCU.println("0")
+  }
+  
+  
+  
   
   
   delay(1000); // Adjust delay as needed for stability
